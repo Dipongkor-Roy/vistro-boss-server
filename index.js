@@ -26,6 +26,7 @@ async function run() {
   try {
     const menuCollection = client.db("vistro-bossDb").collection("Menu");
     const reviewCollection = client.db("vistro-bossDb").collection("Reviews");
+    const cartsCollection = client.db("vistro-bossDb").collection("carts");
    
     app.get('/menu',async (req,res)=>{
       const query={};
@@ -39,6 +40,15 @@ async function run() {
       const menu = await cursor.toArray();
       res.send(menu);
     })
+
+    //carts operations
+    app.post('/carts',async(req,res)=>{
+      const item=req.body;
+      console.log(item)
+      const result=await cartsCollection.insertOne(item);
+      res.send(result);
+    })
+
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
