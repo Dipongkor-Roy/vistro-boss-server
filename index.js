@@ -24,10 +24,17 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const userCollection = client.db("vistro-bossDb").collection("Users");
     const menuCollection = client.db("vistro-bossDb").collection("Menu");
     const reviewCollection = client.db("vistro-bossDb").collection("Reviews");
     const cartsCollection = client.db("vistro-bossDb").collection("carts");
-   
+   //user data create
+app.post('/users',async(req,res)=>{
+  const user=req.body;
+  const result=await userCollection.insertOne(user);
+  res.send(result);
+})
+
     app.get('/menu',async (req,res)=>{
       const query={};
       const cursor = menuCollection.find(query);
