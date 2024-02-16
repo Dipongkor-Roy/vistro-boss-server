@@ -1,15 +1,13 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const app = express();
 const cors = require("cors");
-require('dotenv').config()
+require("dotenv").config();
 const port = process.env.PORT || 2000;
 
 //middleware
 app.use(cors());
 app.use(express.json());
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.8zviwwt.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -19,7 +17,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -28,69 +26,73 @@ async function run() {
     const menuCollection = client.db("vistro-bossDb").collection("Menu");
     const reviewCollection = client.db("vistro-bossDb").collection("Reviews");
     const cartsCollection = client.db("vistro-bossDb").collection("carts");
-   //user data create
-app.post('/users',async(req,res)=>{
-  const user=req.body;
-  const query={email:user.email}
-  const existingUser=await userCollection.findOne(query);
-  if(existingUser){
-    return res.send({message:'User Already Exist',insertedId:null})
-  }
-  const result=await userCollection.insertOne(user);
-  res.send(result);
-})
+    //user data create
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User Already Exist", insertedId: null });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
 
-    app.get('/menu',async (req,res)=>{
-      const query={};
+    app.get("/menu", async (req, res) => {
+      const query = {};
       const cursor = menuCollection.find(query);
       const menu = await cursor.toArray();
       res.send(menu);
-    })
-    app.get('/reviews',async (req,res)=>{
-      const query={};
-      const cursor =reviewCollection.find(query);
+    });
+    app.get("/reviews", async (req, res) => {
+      const query = {};
+      const cursor = reviewCollection.find(query);
       const menu = await cursor.toArray();
       res.send(menu);
-    })
+    });
 
     //carts operations
-    app.get('/carts',async(req,res)=>{
-      const email=req.query.email;
-      
-      if(!email){
+    app.get("/carts", async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
         res.send([]);
-        
       }
-      const query= {email:email};
-        const result=await cartsCollection.find(query).toArray();
-        res.send(result)
-    })
-    app.post('/carts',async(req,res)=>{
-      const item=req.body;
-      console.log(item)
-      const result=await cartsCollection.insertOne(item);
+      const query = { email: email };
+      const result = await cartsCollection.find(query).toArray();
       res.send(result);
-    })
-  //delete
-  app.delete('/carts/:id',async(req,res)=>{
-    const id=req.params.id;
-    const query={ _id: new ObjectId(id)};
-    const result= await cartsCollection.deleteOne(query);
-    res.send(result);
-  })
+    });
+    app.post("/carts", async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await cartsCollection.insertOne(item);
+      res.send(result);
+    });
+    //delete
+    app.delete("/carts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
-    
   }
 }
 run().catch(console.dir);
-
 
 app.get("/", (req, res) => {
   res.send("Vistro-boss Server Working");
