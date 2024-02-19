@@ -59,7 +59,7 @@ async function run() {
        }
       }
       const result=await userCollection.updateOne(filter,updateDoc);
-      res.send(result)
+      res.send(result);
     })
     app.get("/menu", async (req, res) => {
       const query = {};
