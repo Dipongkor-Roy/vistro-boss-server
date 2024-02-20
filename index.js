@@ -2,6 +2,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jwt = require('jsonwebtoken'); //require jwt
 require("dotenv").config();
 const port = process.env.PORT || 2000;
 
@@ -26,8 +27,27 @@ async function run() {
     const menuCollection = client.db("vistro-bossDb").collection("Menu");
     const reviewCollection = client.db("vistro-bossDb").collection("Reviews");
     const cartsCollection = client.db("vistro-bossDb").collection("carts");
+
+    //jwt related api
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token }); //send token as a objectx
+    });
+    //middlewares
+    const verifyToken=(req,res,next)=>{
+      console.log('inside verify token',req.headers);
+      if(!req.headers.authorization){
+        return res.status(401).send({message:'forbiden acess s'})
+      }
+      const token=req.headers.authorization.split(' ')[1];
+      
+      //next();
+    }
     //user data create
-    app.get("/users", async (req, res) => {
+    app.get("/users",verifyToken,async (req, res) => {
       const query = {};
       const result = await userCollection.find(query).toArray();
       res.send(result);
@@ -43,24 +63,24 @@ async function run() {
       res.send(result);
     });
     //users delete
-    app.delete('/users/:id',async (req,res)=>{
-      const id=req.params.id;
-      const query={_id: new ObjectId(id)};
-      const result=await userCollection.deleteOne(query);
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
       res.send(result);
-    })
-    //admin api 
-    app.patch('/users/admin/:id',async (req,res)=>{
-      const id=req.params.id;
-      const filter={_id: new ObjectId(id)};
-      const updateDoc={
-       $set:{
-        role:'admin'
-       }
-      }
-      const result=await userCollection.updateOne(filter,updateDoc);
+    });
+    //admin api
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
     app.get("/menu", async (req, res) => {
       const query = {};
       const cursor = menuCollection.find(query);
