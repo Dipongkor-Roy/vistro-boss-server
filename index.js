@@ -38,7 +38,7 @@ async function run() {
     });
     //middlewares
     const verifyToken=(req,res,next)=>{
-      console.log('inside verify token: ',req.headers.authorization);
+      // console.log('inside verify token: ',req.headers.authorization);
       if(!req.headers.authorization){
         return res.status(401).send({message:'forbiden acess'})
       }
@@ -116,12 +116,18 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+    //menu releted api
     app.get("/menu", async (req, res) => {
       const query = {};
       const cursor = menuCollection.find(query);
       const menu = await cursor.toArray();
       res.send(menu);
     });
+    app.post("/menu",async(req,res)=>{
+      const item=req.body;
+      const result=await menuCollection.insertOne(item);
+      res.send(result);
+    })
     app.get("/reviews", async (req, res) => {
       const query = {};
       const cursor = reviewCollection.find(query);
