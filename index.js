@@ -4,8 +4,8 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken"); //require jwt
-const Stripe = require("stripe");//doing it splitly
-const stripe=Stripe(process.env.PAYMENT_SECRET_KEY); //reqire for stripe
+const Stripe = require("stripe"); //doing it splitly
+const stripe = Stripe(process.env.PAYMENT_SECRET_KEY); //reqire for stripe
 
 const port = process.env.PORT || 2000;
 
@@ -30,6 +30,7 @@ async function run() {
     const menuCollection = client.db("vistro-bossDb").collection("Menu");
     const reviewCollection = client.db("vistro-bossDb").collection("Reviews");
     const cartsCollection = client.db("vistro-bossDb").collection("carts");
+    const paymentCollection = client.db("vistro-bossDb").collection("payments");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -213,6 +214,27 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+    //payment api
+    app.get("/paymentHistory/:email",verifyToken, async (req, res) => {
+      const query = { email: req.params.email };
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+
+    });
+    
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      console.log("Payment Info", payment);
+      //important part of deletion from cart
+      const query = {
+        _id: {
+          $in: payment.cartIds.map((id) => new ObjectId(id)),
+        },
+      };
+      const deleteResult = await cartsCollection.deleteMany(query);
+      res.send({ paymentResult, deleteResult });
     });
 
     // Connect the client to the server	(optional starting in v4.7)
