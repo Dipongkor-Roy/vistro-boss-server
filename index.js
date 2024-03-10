@@ -114,6 +114,9 @@ async function run() {
         revenue
       });
     });
+
+    
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -267,6 +270,44 @@ async function run() {
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+//using aggregate pipeline
+app.get('/order-stats',verifyToken,verifyAdmin,async(req,res)=>{
+  const result=await paymentCollection.aggregate([
+    {
+      $unwind:'$menuIds' //unwind the menu items from the menuId array
+    },
+    {
+      $lookup:{
+        from:'Menu',
+        localField:'menuIds',
+        foreignField:'_id',
+        as:'menuItems'
+      }
+    },
+    {
+      $unwind:'$menuItems'
+    },
+    {
+      $group:{
+        _id:'$menuItems.category',
+        quantity:{$sum:1},
+        revenue:{$sum:'$menuItems.price'}
+      }
+    },
+    {
+      $project:{
+        _id:0,
+        category:'$_id',
+        quantity:'$quantity',
+        revenue:'$revenue'
+
+      }
+    }
+
+  ]).toArray();
+  res.send(result);
+})
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
